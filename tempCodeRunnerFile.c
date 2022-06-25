@@ -1,1 +1,2 @@
-clr_codes
+
+    int a;
