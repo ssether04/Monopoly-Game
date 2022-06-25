@@ -1,0 +1,170 @@
+ __________________________ 
+|         Baltic           |
+|         Avenue           |
+|          120R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 50R              |
+|   Rent House: 50R each   |
+|   Rent Hotel: 100R       |
+|   Sell Value: 180R       |
+|   Build 1st house: 110R  |
+|   Build 2nd house: 180R  |
+|   Build Hotel: 350R      |
+|                          |
+|__________________________|
+ __________________________ 
+|          Bond            |
+|         Street           |
+|          180R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 60R              |
+|   Rent House: 40R        |
+|   Rent Hotel: 80R        |
+|   Sell Value: 140R       |
+|   Build 1st house: 120R  |
+|   Build 2nd house: 180R  |
+|   Build Hotel: 200R      |
+|                          |
+|__________________________|
+ __________________________ 
+|        Vermonto          |
+|         Avenue           |
+|          240R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 80R              |
+|   Rent Houses: 50R each  |
+|   Rent Hotel: 100R       |
+|   Sell value: 200R       |
+|   Build 1st house: 160R  |
+|   Build 2nd house: 180R  |
+|   Build Hotel: 220R      |
+|                          |
+|__________________________|
+ __________________________ 
+|         New York         |
+|          Avenue          |
+|           320R           |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 100R             |
+|   Rent Houses: 60R Each  |
+|   Rent Hotel: 100R       |
+|   Sell value: 160R       |
+|   Build 1st house: 220R  |
+|   Build 2nd house: 240R  |
+|   Build Hotel: 280R      |
+|                          |
+|__________________________|
+ __________________________ 
+|           Bow            |
+|          Street          |
+|           380R           |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 140R             |
+|   Rent Houses: 100R Each |
+|   Rent Hotel: 120R       |
+|   Sell value: 190R       |
+|   Build 1st house: 240R  |
+|   Build 2nd house: 250R  |
+|   Build Hotel: 270R      |
+|                          |
+|__________________________|
+ __________________________ 
+|          Old             |
+|       Kent Road          |
+|          550R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 180R             |
+|   Rent Houses: 100R Each |
+|   Rent Hotel: 120R       |
+|   Sell value: 250R       |
+|   Build 1st house: 240R  |
+|   Build 2nd house: 250R  |
+|   Build Hotel: 270R      |
+|                          |
+|__________________________|
+ __________________________ 
+|         Marvin           |
+|         Avenue           |
+|          600R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 220R             |
+|   Rent Houses: 120R Each |
+|   Rent Hotel: 150R       |
+|   Sell value: 350R       |
+|   Build 1st house: 425R  |
+|   Build 2nd house: 430R  |
+|   Build Hotel: 520R      |
+|                          |
+|__________________________|
+ __________________________ 
+|        WhiteHall         |
+|                          |
+|          670R            |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 240R             |
+|   Rent Houses: 140R Each |
+|   Rent Hotel: 160R       |
+|   Sell value: 380R       |
+|   Build 1st house: 440R  |
+|   Build 2nd house: 450R  |
+|   Build Hotel: 550R      |
+|                          |
+|__________________________|
+ __________________________ 
+|          Park            |
+|          Lane            |
+|          1000R           |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 330R             |
+|   Rent Houses: 180R Each |
+|   Rent Hotel: 200R       |
+|   Sell value: 600R       |
+|   Build 1st house: 580R  |
+|   Build 2nd house: 720R  |
+|   Build Hotel: 1200R     |
+|                          |
+|__________________________|
+ __________________________ 
+|         Mayfair          |
+|       Park Palace        |
+|          1200R           |
+|                          |
+|__________________________|
+|                          |
+|                          |
+|   Rent: 400R             |
+|   Rent Houses: 200R Each |
+|   Rent Hotel: 220R       |
+|   Sell value: 720R       |
+|   Build 1st house: 650R  |
+|   Build 2nd house: 890R  |
+|   Build Hotel: 1500R     |
+|                          |
+|__________________________| 
