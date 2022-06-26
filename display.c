@@ -48,32 +48,32 @@ void print_name_block_wclr(int,int);
 void draw_board();
 int get_player_info();
 int startup();
-int sell_prop(int);
+int sell_prop(int,int,int);
 const char* clr_codes[5]={_Red,_Green,_Blue,_Purple,_Cyan};
 const char* clr_names[5]={"Red","Green","Blue","Purple","Cyan"};
 const int clr_terminal[5]={Terminal_Red,Terminal_Green,Terminal_Blue,Terminal_Purple,Terminal_Cyan};
 const char* prop_names[15]={"",Balt_avan ,Read_rail ,Verm_avan ,"",NewY_avan ,Bow_street,ol_ken_rod,"",Marv_avan ,Whitehall ,"","",Park_Lane ,Mayf_PP};
 char clr_choice[]={0,1,2,3,4,-1}; //Will be empty after colour selection
+const int jail_coord[2] = {12,42};
 int player_count=0;
 int current_player = 0;
 int num_gameover = 0;
 //Board Coordinate {x,y}
-int board_coord[17][2] = {
+int board_coord[16][2] = {
     {108,47},{84,47},{60,47},{36,47},
-    {12,47},{12,37},{12,27},{12,17},
+    {6,43},{12,37},{12,27},{12,17},
     {12, 2},{36, 7},{60, 7},{84, 7},
-    {99, 3},{108,17},{108,27},{108,37},
-    {12,42}
+    {99, 3},{108,17},{108,27},{108,37}
     };
 //1 2 3 5 6 9 10 13 
-//0-Property Code,1-Owned(1) or not(0),2-Player ID,3-Houses,4-Hotels
+//0-> Property Code, 1-> Owned = 1, Not Owned = 0, 2-> Player ID, 3-> Houses, 4-> Hotels
 int property_properies[16][5]={
     {0,0,-1,0,0},{1,0,-1,0,0},{2,0,-1,0,0},{3,0,-1,0,0},
     {4,0,-1,0,0},{5,0,-1,0,0},{6,0,-1,0,0},{7,0,-1,0,0},
     {8,0,-1,0,0},{9,0,-1,0,0},{10,0,-1,0,0},{11,0,-1,0,0},
     {12,0,-1,0,0},{13,0,-1,0,0},{14,0,-1,0,0},{15,0,-1,0,0}
 };
-//{0-Buy Money, 1-Sell Money, 2-Rent Normal, 3-Rent House, 4-Rent Hotel, 5-Buy House1, 6-Buy House2, 7-Buy Hotel}
+//0-> Buy Money, 1-> Sell Money, 2-> Rent Normal, 3-> Rent House, 4-> Rent Hotel, 5-> Buy House1, 6-> Buy House2, 7-> Buy Hotel
 int buy_sell_pay[16][8]={
     {0,0,0,0,0,0,0,0},{120,180,50,50,100,110,180,350},{180,140,60,40,80,120,180,200},{240,200,80,50,100,160,180,220},
     {0,0,0,0,0,0,0,0},{320,160,100,60,100,220,240,280},{380,190,140,100,120,240,250,270},{550,250,180,100,120,240,250,270},
@@ -174,20 +174,23 @@ void print_househotel() {
     }
 }
 
-//Print name block with colour
+//Print name block with colour (Flag=0 means normal Block, Flag=1 means Long Block)
 void print_name_block_wclr(int plyr_id,int flag) {
-    int temp_clr[5]={71,39,23,87,55};
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),temp_clr[players[plyr_id].colour]);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),clr_terminal[players[plyr_id].colour]);
     if(flag==0) {printf(" %c ",*players[plyr_id].name);}
     else {printf("           %c           ",*players[plyr_id].name);}
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),7);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),Terminal_NORMAL);
 }
 
 //Places Player's block/piece on the board
 void place_plyr(int plyr_id,int board_pos){
-    gotoxy(board_coord[board_pos][0],board_coord[board_pos][1]+(plyr_id+1)%4);
-    if(!players[plyr_id].game_over)
+    if(players[plyr_id].in_jail && !players[plyr_id].game_over) {
+        gotoxy(jail_coord[0],jail_coord[1]+(plyr_id+1)%4);
         print_name_block_wclr(plyr_id,0);
+    } else if(!players[plyr_id].game_over){
+        gotoxy(board_coord[board_pos][0],board_coord[board_pos][1]+(plyr_id+1)%4);
+        print_name_block_wclr(plyr_id,0);
+    }
 }
 
 //Finds the length of the name of player
@@ -311,6 +314,7 @@ void draw_board() {
 
 //Prints the current card on which player is on
 void print_prop_card(int crd_no) {
+    int temp_prop_id=crd_no;
     if(crd_no==5)crd_no=4;if(crd_no==6)crd_no=5;
     if(crd_no==7)crd_no=6;if(crd_no==9)crd_no=7;
     if(crd_no==10)crd_no=8;if(crd_no==13)crd_no=9;
@@ -328,9 +332,9 @@ void print_prop_card(int crd_no) {
         line++;
     }printf("\n");
     fclose(card_disp);
-    if(property_properies[crd_no][1]){
-        int temp_len=(players[property_properies[crd_no][2]].name_len + 11)/2;
-        gotoxy(139-temp_len,39);printf("Owned by - ");print_name_wclr(property_properies[crd_no][2]);
+    if(!players[current_player].in_jail && property_properies[temp_prop_id][1]){
+        int temp_len=(players[property_properies[temp_prop_id][2]].name_len + 11)/2;
+        gotoxy(139-temp_len,39);printf("Owned by - ");print_name_wclr(property_properies[temp_prop_id][2]);
     }
 }
 
@@ -345,7 +349,7 @@ void update_assets(int plyr_id) {
 }
 
 //Prints Victory Screen
-void print_victory_screen(int plyr_id) {
+void print_victory_screen(int plyr_id, int how) {
     FILE* win_fp;
     int cursor_offset=0;
     char win_file_lines[250];
@@ -359,7 +363,12 @@ void print_victory_screen(int plyr_id) {
         printf(win_file_lines);
     }
     fclose(win_fp);
-    gotoxy(117-(50+players[plyr_id].name_len)/2,48);printf("%s has Attained MONOPOLY by Acquiring all properties",players[plyr_id].name);
+    if(how){
+        gotoxy(117-(50+players[plyr_id].name_len)/2,48);printf("%s has Attained MONOPOLY by Being the only person on the board",players[plyr_id].name);
+    } else {
+        gotoxy(117-(50+players[plyr_id].name_len)/2,48);printf("%s has Attained MONOPOLY by Acquiring all properties",players[plyr_id].name);
+    }
+       
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),Terminal_NORMAL);
     gotoxy(0,62);
     exit(1);
@@ -368,11 +377,11 @@ void print_victory_screen(int plyr_id) {
 //Checks if Winner has been Declared
 void check_winner() {
     for(int plyr_id=0;plyr_id<player_count;plyr_id++) {
-        if(players[plyr_id].num_owned_prop==10) {
-            print_victory_screen(plyr_id);
+        if(players[plyr_id].num_owned_prop==10) { // Winning by Owning all the properties in the game 
+            print_victory_screen(plyr_id,0);
         }
-        if(players[plyr_id].game_over==0 && player_count-num_gameover == 1) {
-            print_victory_screen(plyr_id);
+        if(players[plyr_id].game_over==0 && player_count-num_gameover == 1) { // Winning by being the only person in the game
+            print_victory_screen(plyr_id,1);
         } 
     }
 }
@@ -392,12 +401,7 @@ int check_assets(int plyr_id) {
             gotoxy(126,20+(offset++));printf("you are forced to sell your owned properties");
             Sleep(2400);
             BOARD_RESET;
-            int sold_prop_id=sell_prop(plyr_id);
-            int payment = buy_sell_pay[plyr_pos(plyr_id)][1] + //Property Sell Cost
-                ((property_properies[plyr_pos(plyr_id)][3] * buy_sell_pay[plyr_pos(plyr_id)][3])/2) + //House payment {Half of what was invested}
-                ((property_properies[plyr_pos(plyr_id)][4] * buy_sell_pay[plyr_pos(plyr_id)][4])/2); // Hotel Payment {Half of what was invested}
-            gotoxy(126,20+offset);printf("You have \033[0;32mSuccessfully\033[0m SOLD to the Bank %s",prop_names[sold_prop_id]);
-            players[plyr_id].money += payment;
+            sell_prop(plyr_id,0,-1);
             Sleep(1600);
             gotoxy(126,30);printf("Press any key to continue...");getch();
         } 
@@ -421,25 +425,47 @@ void prop_reset(int plyr_id,int prop_id){
     players[plyr_id].num_owned_prop -=1;
 }
 
-//Sells an owned propert {Returns SOLD property code}
-int sell_prop(int plyr_id) {
-    int offset=0;
+//Resets Player Properties
+void player_reset(int plyr_id) {
+    players[plyr_id].colour = -1;
+    players[plyr_id].money = -1;
+    players[plyr_id].pos = -1;
+    players[plyr_id].num_owned_prop = 0;
+    players[plyr_id].game_over = 1;
+    players[plyr_id].total_asset = 0;
+}
+
+
+
+//Sells an owned propert {PlayerID, Flag value for debt sell, Payment for Debt Sell} {Returns cursor_offset}
+int sell_prop(int plyr_id, int force_pay_flag, int payment) {
     int sell_inp;
-    int temp_ids[9][2]={};
+    int temp_ids[9][3]={}; //0-> Number Assigned , 1-> PropCode, 2-> Sell Cost
+    int sell_off=1;
     BOARD_RESET;
+    if(force_pay_flag==1) {
+        gotoxy(126,20+(sell_off++));printf("You have to Pay %dR", payment);
+    }
     for(int i=0;i<players[plyr_id].num_owned_prop;i++) {
-        gotoxy(126,20+(offset++));printf("Press %d to Sell %s",i+1,prop_names[players[plyr_id].owned_prop[i]]);
+        int sell_payment = buy_sell_pay[players[plyr_id].owned_prop[i]][1] + //Property Sell Cost
+            (property_properies[players[plyr_id].owned_prop[i]][3] * buy_sell_pay[players[plyr_id].owned_prop[i]][3]) + //House payment
+            (property_properies[players[plyr_id].owned_prop[i]][4] * buy_sell_pay[players[plyr_id].owned_prop[i]][4]); // Hotel Payment
+        gotoxy(126,21+(sell_off++));printf("Press %d to Sell %s (+ %dR)",i+1,prop_names[players[plyr_id].owned_prop[i]],sell_payment);
         temp_ids[i][0]=i+1;
         temp_ids[i][1]=players[plyr_id].owned_prop[i];
+        temp_ids[i][2]=sell_payment;
     }
-    gotoxy(126,20+offset);
-    while(1){
-        sell_inp = getch()-48;
+    gotoxy(126,21+sell_off);
+    while((sell_inp=(getch()-48))!=EOF){
         if(sell_inp>0 && sell_inp<=players[plyr_id].num_owned_prop) {
             for(int i=0;i<players[plyr_id].num_owned_prop;i++) {
                 if(temp_ids[i][0]==sell_inp) {
                     prop_reset(plyr_id,temp_ids[i][1]);
-                    return temp_ids[i][1];
+                    players[current_player].money += temp_ids[i][2];
+                    gotoxy(126,22+(sell_off++));print_name_wclr(current_player);printf(" + %dR",temp_ids[i][2]);
+                    gotoxy(126,23+(sell_off++));printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[temp_ids[i][1]]);
+                    Sleep(1000);
+                    return sell_off;
                 }
             }
         }
@@ -491,89 +517,89 @@ int enter_jail() {
 }
 
 int attempt_exitjail(int plyr_id) {
-char choice;
-char confirm_pay;
-int die;
-int outer_flag=0;
-int flag=0;
-gotoxy(126,20);printf("You are currently in Jail....");
-gotoxy(126,23);printf("Press P to Pay Police 500R and get out");
-gotoxy(126,24);printf("Press R to Roll die, if you get a 6 you are set free");
-gotoxy(126,25);
-while(outer_flag==0 && (choice=getch())!=EOF){
-    switch(choice) {
-        case 'p':
-            if(players[plyr_id].money>=JAIL_FEE){
-                players[plyr_id].money -= JAIL_FEE;
-                gotoxy(126,25);printf(" - %d ",JAIL_FEE);print_name_wclr(plyr_id);
-                Sleep(2200);
-                gotoxy(126,30);printf("Press any key to continue...");getch();
-                players[plyr_id].pos=4;
-                outer_flag=1;
-                BOARD_RESET;
-                break;
-            } else if(players[plyr_id].total_asset >= JAIL_FEE){
-                if(players[plyr_id].money<JAIL_FEE){
+    char choice;
+    char confirm_pay;
+    int die;
+    int outer_flag=0;
+    int inner_flag=0;
+    int offset=0;
+    gotoxy(126,20);printf("You are currently in Jail....");
+    gotoxy(126,23);printf("Press P to Pay Police 500R and get out");
+    gotoxy(126,24);printf("Press R to Roll die, if you get a 6 you are set free");
+    gotoxy(126,25);
+    while(outer_flag==0 && (choice=getch())!=EOF){
+        switch(choice) {
+            case 'p':
+                if(players[plyr_id].money>=JAIL_FEE){
+                    players[plyr_id].money -= JAIL_FEE;
+                    gotoxy(126,25);print_name_wclr(plyr_id);printf(" - %dR ",JAIL_FEE);
+                    Sleep(1300);
+                    gotoxy(126,30);printf("Press any key to continue...");getch();
+                    players[plyr_id].pos=4;
+                    outer_flag=1;
                     BOARD_RESET;
-                    gotoxy(126,21);printf("You dont have enough money to pay for Police Fee, you have to sell owned properties to pay");
-                    gotoxy(135,22);printf("OR");
-                    gotoxy(126,23);printf("Roll a 6 to get out");
-                    gotoxy(126,24);printf("Press S to sell owned property");
-                    gotoxy(126,25);printf("Press R to roll dice");
-                    while((confirm_pay=getch())!=EOF && flag==0) {
-                        switch(confirm_pay) {
-                            case 's':
-                                if(players[plyr_id].total_asset>=JAIL_FEE) {
-                                    while(players[plyr_id].money<JAIL_FEE) {
-                                        int sold_prop_id = sell_prop(plyr_id);
-                                        gotoxy(126,21);printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[sold_prop_id]);
-                                        Sleep(1800);
+                    break;
+                } else if(players[plyr_id].total_asset >= JAIL_FEE){
+                    if(players[plyr_id].money<JAIL_FEE){
+                        BOARD_RESET;
+                        gotoxy(126,21);printf("You dont have enough money to pay for Police Fee, you have to sell owned properties to pay");
+                        gotoxy(126,22);printf("OR");
+                        gotoxy(126,23);printf("Roll a 6 to get out");
+                        gotoxy(126,24);printf("Press S to sell owned property");
+                        gotoxy(126,25);printf("Press R to roll dice");
+                        while((confirm_pay=getch())!=EOF && inner_flag==0) {
+                            switch(confirm_pay) {
+                                case 's':
+                                    if(players[plyr_id].total_asset>=JAIL_FEE) {
+                                        while(players[plyr_id].money<JAIL_FEE) {
+                                            offset = sell_prop(plyr_id,0,-1);
+                                            Sleep(1800);
+                                        }
+                                        players[plyr_id].money -= JAIL_FEE;
+                                        gotoxy(126,20+offset);print_name_wclr(plyr_id);printf(" - %dR",JAIL_FEE);
+                                        players[plyr_id].pos=4;
+                                        Sleep(1300);
+                                        gotoxy(126,30);printf("Press any key to continue...");getch();
+                                        inner_flag = 1;
+                                        break;
                                     }
-                                    players[plyr_id].money -= JAIL_FEE;
-                                    players[plyr_id].pos=4;
-                                    Sleep(1500);
-                                    gotoxy(126,30);printf("Press any key to continue...");getch();
-                                    flag =1;
-                                    break;
-                                }
-                            case 'r':
-                                goto roll;
+                                case 'r':
+                                    goto roll;
+                            }
                         }
                     }
+                    outer_flag=1;
+                    break;
+                } else {
+                    gotoxy(126,21);printf("You dont have enough assets to pay for JAIL FEE, you are forced to roll the dice");
+                    Sleep(1000);
+                    goto roll;
                 }
-                outer_flag=1;
-                break;
-            } else {
-                gotoxy(126,21);printf("You dont have enough assets to pay for JAIL FEE, you are forced to roll the dice");
-                Sleep(1000);
-                goto roll;
-            }
-        case 'r':
-            roll:
-            die = roll_dice();
-            gotoxy(126,26);printf("ROLLING");
-            for(int i=0;i<3;i++) {
-                Sleep(170);
-                printf(".");
-            }
-            gotoxy(126,27);
-            printf("Dice: %d",die);
-            Sleep(800);
-            if(die==6) {
-                gotoxy(126,28);
-                printf("You got a 6!!, you are now set free...");
-                players[plyr_id].pos=4;
-                Sleep(800);
-                BOARD_RESET;
-                return 1;
-            } else {
-                gotoxy(126,28);
-                printf("Better luck next time... :)");
-                Sleep(800);
-                return 0;
-            }
+            case 'r':
+                roll:
+                die = roll_dice();
+                gotoxy(126,26);printf("ROLLING");
+                for(int i=0;i<3;i++) {
+                    Sleep(170);
+                    printf(".");
+                }
+                gotoxy(126,28);printf("Dice: %d",die);
+                Sleep(600);
+                if(die==6) {
+                    gotoxy(126,29);
+                    printf("You got a 6!!, you are now set free...");
+                    players[plyr_id].pos=4;
+                    Sleep(800);
+                    BOARD_RESET;
+                    return 1;
+                } else {
+                    gotoxy(126,30);
+                    printf("Better luck next time... :)");
+                    Sleep(800);
+                    return 0;
+                }
+        }
     }
-}
 }
 
 int is_on_property(int plyr_id) {
@@ -617,10 +643,10 @@ int get_player_info() {
         gotoxy(90,22+cursor_offset);printf("Enter Player %d's Name: ",i+1);scanf("%s",&players[i].name);find_len(i);
         // Checks if name has any special characters
         for(int n=0;n<players[i].name_len;n++) {
-            if(players[i].name[n]<97 || players[i].name[n]>122) {
+            if( players[i].name[n]<97 || players[i].name[n]>122) {
                 gotoxy(90,23+cursor_offset);printf("-%c-",players[i].name[n]);
                 gotoxy(90,24+cursor_offset);printf("Name has \033[0;31mINVALID\033[0m Characters");
-                Sleep(200); //TODO UNDO
+                Sleep(500); //TODO UNDO
                 goto enter_again;
             }
         }
@@ -652,11 +678,9 @@ int get_player_info() {
     }printf("\n");
     fclose(start_screen_fp);
     // PRINT PLAYERS {CHECKING}
-    gotoxy(90,22+cursor_offset);printf("Player 1: ");print_name_wclr(0)
-    gotoxy(90,23+cursor_offset);printf("Player 2: ");print_name_wclr(1)
-    gotoxy(90,24+cursor_offset);(*players[2].name == '\0')?printf("Starting Game...",gotoxy(0,0)):printf("Player 3: ");print_name_wclr(3);
-    gotoxy(90,25+cursor_offset);(*players[3].name == '\0')?printf("Starting Game...",gotoxy(0,0)):printf("Player 4: ");print_name_wclr(4);
-    gotoxy(0,0);printf("Starting Game...");
+    for(int i=0;i<player_count;i++){
+        gotoxy(90,22+cursor_offset++);printf("Player %d: ",i+1);print_name_wclr(i);
+    }
     //First letter of name to Capital to each player
     for(int i=0;i<player_count;i++) {
         if(players[i].name[0]>=97 && players[i].name[0]<=122) {players[i].name[0] -= 32;} 
@@ -694,27 +718,34 @@ int startup() {
 //Game start
 void game_start(){
     clear();
-    int cursor_offset=0,x_offset=0,x_name_offset=0,x_money_offset=0,flag=0;
-    int dice_num=0;
-    char plyr_statlines[40];
     char st_inp;
+    int dice_flag=0;
+    int dice_num=0;
+    int offset=0;
+    int sell_offset=0;
+    int rent_payment=0;
+    int chan_offset=0;
+    int c_line=0;
+    char chance_lines[150]; // _++_+_+_+_+__+_+_+_=-+-+_=_+_+-+-
+    char plyr_statlines[40];
     char opt;
     char prop_confirm;
     while(1) {
-        int off=0;
+        offset = 0;
         check_winner();
+        update_assets(current_player);
         if(players[current_player].game_over) {
             if(!players[current_player].reset_flag) {
                 for(int i=0;i<players[current_player].num_owned_prop;i++) {
                     prop_reset(current_player,players[current_player].owned_prop[i]);
+                    player_reset(current_player);
                 }
                 players[current_player].reset_flag=1;
             }
             goto next;
         }
-        update_assets(current_player);
         BOARD_RESET;
-        gotoxy(126,20);
+        //JAIL LOGIC
         if(players[current_player].in_jail==1 || players[current_player].in_park==1) {
             players[current_player].in_park=0;
             if(players[current_player].in_jail==1) {
@@ -723,40 +754,39 @@ void game_start(){
                     goto jail_bypass;
                 }
             }
-            current_player=(current_player+1)%player_count;
-            continue;
+            goto next;
         }
         jail_bypass:
         gotoxy(126,19);print_name_wclr(current_player);printf(" Press R to Roll the dice...");
-        while((st_inp=getch())!=EOF && flag==0){
+        while((st_inp=getch())!=EOF && dice_flag==0){
             if(st_inp=='r') {
                 dice_num=roll_dice();
-                gotoxy(126,20);printf("Dice: %d",dice_num);flag=1;gotoxy(126,21);
+                gotoxy(126,21);printf("Dice: %d",dice_num);dice_flag=1;gotoxy(126,21);
                 if(dice_num==6) {
-                    gotoxy(126,21);print_name_wclr(current_player);printf(" + 50");
+                    gotoxy(126,23);print_name_wclr(current_player);printf(" + 50");
                     players[current_player].money+=50;
-                    Sleep(1000);
                 }
+                gotoxy(126,24);
+                Sleep(550);
                 break;
             }
         }
         Sleep(1000);
         move_plyr(current_player,dice_num,1);
-        flag = 0;
+        dice_flag = 0;
 
         //CHANCE LOGIC
-        char chance_lines[150];
-        int chan_offset=0;
-        int c_line=0;
+        chan_offset=0;
+        c_line=0;
         if(plyr_pos(current_player)==11) {
             int rand_num = rand_number(14);
             chance_fp = fopen("Files\\Chance_cards.txt","r");
             while(!feof(chance_fp)) {
                 fgets(chance_lines,150,chance_fp);
-                if(c_line++==rand_num){
-                    gotoxy(126,22);
+                c_line++;
+                if(c_line==rand_num){
                     gotoxy(126,21+(chan_offset++));printf(chance_lines);
-                    Sleep(3000);
+                    Sleep(2000);
                     break;
                 }
             }
@@ -770,10 +800,9 @@ void game_start(){
                     break;
                 case 3:
                     players[current_player].money+=150;
-                    gotoxy(126,30);printf("Press any key to continue...");getch();
+                    gotoxy(126,22+(chan_offset++));print_name_wclr(current_player);printf(" + 150");
                     break;
                 case 4:
-                    // TODO
                     break;
                 case 5:
                     move_plyr_back(current_player,1);
@@ -786,165 +815,155 @@ void game_start(){
                     break;
                 case 8:
                     for(int plyr_id=0;plyr_id<player_count;plyr_id++) {
-                        if(players[plyr_id].money>=50 && plyr_id!=current_player) {
-                            players[plyr_id].money-=50;
-                            gotoxy(126,21+(chan_offset++));print_name_wclr(plyr_id);printf(" - 50");
-                            players[current_player].money +=50;
-                            gotoxy(126,21+(chan_offset++));print_name_wclr(current_player);printf(" + 50");
+                        if(!players[plyr_id].game_over && plyr_id!=current_player && players[plyr_id].money>=25) {
+                            players[plyr_id].money-=25;
+                            gotoxy(126,22+(chan_offset++));print_name_wclr(plyr_id);printf(" - 25");
+                            players[current_player].money +=25;
+                            gotoxy(126,22+(chan_offset++));print_name_wclr(current_player);printf(" + 25");
+                            chan_offset++;
                         }
                     }
-                    gotoxy(126,30);printf("Press any key to continue...");getch();
                     break;
                 case 9:
                     move_plyr(current_player,5,1);
                     break;
                 case 10:
                     move_plyr(current_player,1,1);
+                    goto bypass;
                     break;
                 case 11:
-                    //players[current_player].money -= payment;
+                    for(int i=0;i<players[current_player].num_owned_prop;i++) {
+                        int payment = ((property_properies[players[current_player].owned_prop[i]][3]) * 20) + 
+                                      ((property_properies[players[current_player].owned_prop[i]][4]) * 40);
+                        gotoxy(126,22+(chan_offset++));print_name_wclr(current_player);printf(" - %d for %s",payment,prop_names[players[current_player].owned_prop[i]]);
+                    }
                     break;
-                    //Make general repairs on all your property. For each house pay 20. For each hotel pay 40
                 case 12:
                     move_plyr(current_player,14,1);
                     break;
                 case 13:
-                    gotoxy(126,21+(chan_offset++));printf("You have to pay %d Speeding Fine :(",SPEEDING_FINE);
+                    gotoxy(126,22+(chan_offset++));printf("You have to pay %d Speeding Fine :(",SPEEDING_FINE);
                     Sleep(1000);
                     if(players[current_player].money>=SPEEDING_FINE) {
                         players[current_player].money -= SPEEDING_FINE;
-                        gotoxy(126,21+(chan_offset++));printf("Press any key to continue...");getch();
                     }
                     else if(players[current_player].total_asset >= SPEEDING_FINE){
                         while(players[current_player].money<SPEEDING_FINE) {
                             BOARD_RESET;
-                            gotoxy(126,21+(chan_offset++));printf("You dont have enough money to pay for Fine, you have to sell owned properties");
+                            gotoxy(126,22+(chan_offset++));printf("You dont have enough money to pay for Fine, you have to sell owned properties");
                             Sleep(3000);
-                            int sold_prop_id=sell_prop(current_player);
-                            int sell_payment = buy_sell_pay[sold_prop_id][1] + //Property Sell Cost
-                                (property_properies[sold_prop_id][3] * buy_sell_pay[sold_prop_id][3]) + //House payment
-                                (property_properies[sold_prop_id][4] * buy_sell_pay[sold_prop_id][4]); // Hotel Payment
-                            gotoxy(126,21+(chan_offset++));printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[sold_prop_id]);
-                            players[current_player].money += sell_payment;
-                            gotoxy(126,21+(chan_offset++));print_name_wclr(current_player);printf(" + %d",sell_payment);
+                            offset=sell_prop(current_player,1,SPEEDING_FINE);
                             Sleep(3000);
                         }
                         players[current_player].money -= SPEEDING_FINE;
-                        gotoxy(126,21+(chan_offset++));print_name_wclr(current_player);printf(" - %d",SPEEDING_FINE);
+                        gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %d",SPEEDING_FINE);
                         Sleep(2000);
-                        gotoxy(126,21+(chan_offset++));printf("Press any key to continue...");getch();
                     } else {
-                        gotoxy(126,21+(chan_offset++));printf("You dont have enough assets to pay for Speeding Fine, you cannot attain MONOPOLY");
+                        gotoxy(126,22+(offset++));printf("You dont have enough assets to pay for Speeding Fine, you cannot attain MONOPOLY");
                         players[current_player].game_over=1;num_gameover+=1;
                         Sleep(4000);
                     }
+                    gotoxy(126,25+(offset++));print_name_wclr(current_player);printf(" - %d",SPEEDING_FINE);
                     break;
                 case 14:
                     for(int plyr_id=0;plyr_id<player_count;plyr_id++) {
-                        if(players[current_player].money>=50) {
-                            players[current_player].money-=50;
-                            gotoxy(126,21+(chan_offset++));print_name_wclr(current_player);printf(" - 50");
-                            players[plyr_id].money +=50;
-                            gotoxy(126,21+(chan_offset++));print_name_wclr(plyr_id);printf(" + 50");
+                        if(players[current_player].money>=30 && plyr_id!=current_player) {
+                            players[current_player].money-=30;
+                            gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - 30");
+                            players[plyr_id].money +=30;
+                            gotoxy(126,22+(offset++));print_name_wclr(plyr_id);printf(" + 30");
+                            offset++;
                         }
                     }
-                    gotoxy(126,30);printf("Press any key to continue...");getch();
                     break;
             }
+            gotoxy(126,30);printf("Press any key to continue...");getch();
+            bypass:
         }
+
         //TAX SYSTEM
+        
         if(plyr_pos(current_player)==15) {
-            gotoxy(126,20);printf("You have to pay %d TAX :(",TAX);
-            Sleep(1200);
+            gotoxy(126,20+(offset++));printf("You have to pay %dR TAX :(",TAX);
+            Sleep(1000);
             if(players[current_player].money>=TAX) {
                 players[current_player].money -= TAX;
-                gotoxy(126,30);printf("Press any key to continue...");getch();
             }
             else if(players[current_player].total_asset >= TAX){
                 while(players[current_player].money<TAX) {
-                    BOARD_RESET;
-                    gotoxy(126,21);printf("You dont have enough money to pay for Tax, you have to sell owned properties to pay for Tax");
-                    Sleep(3000);
-                    int sold_prop_id=sell_prop(current_player);
-                    int sell_payment = buy_sell_pay[sold_prop_id][1] + //Property Sell Cost
-                        (property_properies[sold_prop_id][3] * buy_sell_pay[sold_prop_id][3]) + //House payment
-                        (property_properies[sold_prop_id][4] * buy_sell_pay[sold_prop_id][4]); // Hotel Payment
-                    gotoxy(126,22);printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[sold_prop_id]);
-                    players[current_player].money += sell_payment;
-                    gotoxy(126,23);print_name_wclr(current_player);printf(" + %d",sell_payment);
+                    gotoxy(126,22+(offset++));printf("You dont have enough money to pay for Tax, you have to sell owned properties to pay for Tax");
+                    Sleep(1300);
+                    offset = sell_prop(current_player,1,TAX);
                     Sleep(3000);
                 }
-                players[current_player].money -= 400;
-                gotoxy(126,24);print_name_wclr(current_player);printf(" - %d",400);
-                Sleep(2000);
-                gotoxy(126,30);printf("Press any key to continue...");getch();
+                players[current_player].money -= TAX;
             } else {
-                gotoxy(126,21);printf("You dont have enough assets to pay for Tax, you cannot attain MONOPOLY");
+                gotoxy(126,22+(++offset));printf("You dont have enough assets to pay for Tax, you cannot attain MONOPOLY");
                 players[current_player].game_over=1;num_gameover+=1;
-                Sleep(4000);
+                Sleep(3000);
+                goto next;
             }
+            gotoxy(126,22+(++offset));print_name_wclr(current_player);printf(" - %dR",TAX);
+            Sleep(2000);
+            gotoxy(126,30);printf("Press any key to continue...");getch();
         }
+
         else if(plyr_pos(current_player)==8) {
             players[current_player].in_park=1;
         }
         else if(plyr_pos(current_player)==12) {
             Sleep(500);
             enter_jail();
-            plyr_pos(current_player)=16;
+            plyr_pos(current_player) = -1;
             place_plyr(current_player,plyr_pos(current_player));
             players[current_player].in_jail=1;
         }
+
+        offset = 0;
+        sell_offset=0;
+
         if(is_on_property(current_player)) {
             BOARD_RESET; 
             if(property_properies[plyr_pos(current_player)][2]!=current_player && property_properies[plyr_pos(current_player)][1]==1) {
                 print_prop_card(plyr_pos(current_player));
-                int rent_payment = buy_sell_pay[plyr_pos(current_player)][2] + //Property Rent
-                    (property_properies[plyr_pos(current_player)][3] * buy_sell_pay[plyr_pos(current_player)][3]) + //House payment
-                    (property_properies[plyr_pos(current_player)][4] * buy_sell_pay[plyr_pos(current_player)][4]); // Hotel Payment
-                gotoxy(126,20);
+                rent_payment = buy_sell_pay[plyr_pos(current_player)][2] + //Property Rent
+                (property_properies[plyr_pos(current_player)][3] * buy_sell_pay[plyr_pos(current_player)][3]) + //House payment
+                (property_properies[plyr_pos(current_player)][4] * buy_sell_pay[plyr_pos(current_player)][4]); // Hotel Payment
+                gotoxy(126,19);
                 printf("This property has already been Acquired, you must pay %dR to ",rent_payment);print_name_wclr(property_properies[plyr_pos(current_player)][2]);
                 if(players[current_player].money>=rent_payment) {
                     players[current_player].money -= rent_payment;
                 } else if(players[current_player].total_asset>=rent_payment) {
-                    while(players[current_player].money<rent_payment) {
-                        BOARD_RESET;
-                        gotoxy(126,21);printf("You dont have enough money to pay the Player, you have to sell Owned property to pay");
-                        Sleep(3000);
-                        int sold_prop_id=sell_prop(current_player);
-                        int sell_payment = buy_sell_pay[sold_prop_id][1] + //Property Sell Cost
-                            (property_properies[sold_prop_id][3] * buy_sell_pay[sold_prop_id][3]) + //House payment
-                            (property_properies[sold_prop_id][4] * buy_sell_pay[sold_prop_id][4]); // Hotel Payment
-                        gotoxy(126,22);printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[sold_prop_id]);
-                        players[current_player].money += sell_payment;
-                        gotoxy(126,23);print_name_wclr(current_player);printf(" + %d",sell_payment);
+                    while(players[current_player].money<rent_payment) { //Keeps Selling Property until player has money to pay
+                        gotoxy(126,22+offset);printf("You dont have enough money to pay the Player, you have to sell Owned property to pay");
+                        Sleep(2000);
+                        offset=sell_prop(current_player,1,rent_payment);
                         Sleep(3000);
                     }
                     players[current_player].money-=rent_payment;
-                    gotoxy(126,24);print_name_wclr(current_player);printf(" - %d",rent_payment);
-                    Sleep(2000);
-                    gotoxy(126,30);printf("Press any key to continue...");getch();
                 } else {
-                    gotoxy(126,21);printf("You dont have enough assets to pay for rent, you cannot attain MONOPOLY");
+                    gotoxy(126,20+(offset++));printf("You dont have enough assets to pay for rent, you cannot attain MONOPOLY");
                     players[current_player].game_over=1;num_gameover+=1;
                     Sleep(3000);
                     goto next;
                 }
-                gotoxy(126,21);print_name_wclr(current_player);printf(" - %d",rent_payment);
+                gotoxy(126,21+(offset++));print_name_wclr(current_player);printf(" - %dR",rent_payment);
                 players[property_properies[plyr_pos(current_player)][2]].money += rent_payment;
-                gotoxy(126,23);print_name_wclr(property_properies[plyr_pos(current_player)][2]);printf(" + %d",rent_payment);
+                gotoxy(126,22+(offset++));print_name_wclr(property_properies[plyr_pos(current_player)][2]);printf(" + %dR",rent_payment);
                 Sleep(1000);
-                gotoxy(126,30);printf("Press any key to continue...");getch();
+                gotoxy(126,23+(offset++));printf("Press any key to continue...");getch();
             }
 
 
-            //TODO CHANGE THIS TO PRINT_NAME_WCLR
             //TODO CHANGE JAIL SCREEN
 
+
+            offset = 0;
             if(current_player == property_properies[plyr_pos(current_player)][2]) {
-                gotoxy(126,21);printf("You have landed on your own Property, you get 50R");
-                players[current_player].money += 50;
-                gotoxy(126,22);print_name_wclr(current_player);printf(" + %d",50);
-                Sleep(1000);
+                gotoxy(126,21);printf("You have landed on your own Property, you get 25R");
+                players[current_player].money += 25;
+                gotoxy(126,22);print_name_wclr(current_player);printf(" + %dR",25);
+                Sleep(1200);
             }
             BOARD_RESET;
             print_prop_card(plyr_pos(current_player));
@@ -952,23 +971,19 @@ void game_start(){
                 gotoxy(126,20);printf("Press S to Sell any owned properties");
             }
             if(property_properies[plyr_pos(current_player)][1]==0 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][0]) {
-                gotoxy(126,21+(off++));printf("Press B to Buy current property");
+                gotoxy(126,21+(offset++));printf("Press B to Buy current property");
             }
             if(!players[current_player].in_jail && property_properies[plyr_pos(current_player)][2]==current_player) {
-                gotoxy(126,21+(off++));printf("Press H to build a House/Hotel on this property");
+                gotoxy(126,21+(offset++));printf("Press H to build a House/Hotel on this property");
             }
-            gotoxy(126,21+(off++));printf("Press C to Continue to next player");
-            gotoxy(126,21+(off++));
+            gotoxy(126,21+(offset++));printf("Press C to Continue to next player");
+            gotoxy(126,21+(offset++));
+            offset = 0;
             while((opt=getch())!=EOF){
                 switch(opt) {
                     case 's':
                         if(players[current_player].num_owned_prop!=0){
-                            int sold_prop_id=sell_prop(current_player);
-                            int payment = buy_sell_pay[sold_prop_id][1] + //Property Sell Cost
-                              ((property_properies[sold_prop_id][3] * buy_sell_pay[sold_prop_id][3])/2) + //House payment {Half of what was invested}
-                              ((property_properies[sold_prop_id][4] * buy_sell_pay[sold_prop_id][4])/2); // Hotel Payment {Half of what was invested}
-                            gotoxy(126,21+(off++));printf("You have \033[0;32mSuccessfully\033[0m SOLD %s",prop_names[sold_prop_id]);
-                            players[current_player].money += payment;
+                            offset=sell_prop(current_player,0,-1);
                             Sleep(2000);
                             gotoxy(126,30);printf("Press any key to continue...");getch();
                             goto next;
@@ -977,18 +992,17 @@ void game_start(){
                         if(property_properies[plyr_pos(current_player)][1]==0 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][0]) {
                             BOARD_RESET;
                             print_prop_card(plyr_pos(current_player));
-                            gotoxy(126,21);
                             if(players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][0]) {
-                                property_properies[plyr_pos(current_player)][1]=1;
-                                players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][0];
-                                property_properies[plyr_pos(current_player)][2] = current_player;
-                                players[current_player].num_owned_prop+=1;
-                                players[current_player].owned_prop[players[current_player].num_owned_prop-1] = plyr_pos(current_player);
-                                gotoxy(126,22);printf("You have \033[0;32mSuccessfully\033[0m Acquired %s",prop_names[plyr_pos(current_player)]);
-                                // TODO SHOW TRANSACTION
+                                property_properies[plyr_pos(current_player)][1] = 1 ; // Sets Ownership Flag to 1
+                                players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][0]; // Subtracts Money
+                                gotoxy(126,19+(offset++));print_name_wclr(current_player);printf(" - %dR ",buy_sell_pay[plyr_pos(current_player)][0]); // Shows Transaction
+                                property_properies[plyr_pos(current_player)][2] = current_player; //Setting Property owner to PlayerID
+                                players[current_player].num_owned_prop+=1; // Increments number of owned properties for player
+                                players[current_player].owned_prop[players[current_player].num_owned_prop-1] = plyr_pos(current_player);//Gives property code to owner
+                                gotoxy(126,20+(offset++));printf("You have \033[0;32mSuccessfully\033[0m Acquired %s",prop_names[plyr_pos(current_player)]);
                             }
                             else {
-                                gotoxy(126,22);printf("You dont have enough money to buy %s :(",prop_names[plyr_pos(current_player)]);
+                                gotoxy(126,21+(offset++));printf("You dont have enough money to buy %s :(",prop_names[plyr_pos(current_player)]);
                             }
                             Sleep(2000);
                             goto next;
@@ -996,43 +1010,40 @@ void game_start(){
                     case 'h':
                         if(!players[current_player].in_jail && property_properies[plyr_pos(current_player)][2]==current_player) {
                             BOARD_RESET;
-                            gotoxy(126,21);
+                            gotoxy(126,21+(offset++));
                             if(property_properies[plyr_pos(current_player)][3]==0 || property_properies[plyr_pos(current_player)][3]==1) {
                                 if(property_properies[plyr_pos(current_player)][3]==0 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][5]) {
-                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][5];
-                                    gotoxy(126,24);print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][5]);
-                                    property_properies[plyr_pos(current_player)][3] +=1;
+                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][5];// Subtracts Money
+                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][5]);// Shows Transaction 
+                                    property_properies[plyr_pos(current_player)][3] +=1;// Builds House
                                 }
                                 else if(property_properies[plyr_pos(current_player)][3]==1 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][6]) {
-                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][6];
-                                    gotoxy(126,24);print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][6]);
-                                    property_properies[plyr_pos(current_player)][3] +=1;
+                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][6];// Subtracts Money
+                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][6]);// Shows Transaction 
+                                    property_properies[plyr_pos(current_player)][3] +=1;// Builds House
                                 }
                                 else if(players[current_player].money<buy_sell_pay[plyr_pos(current_player)][5] || players[current_player].money<buy_sell_pay[plyr_pos(current_player)][6]){
-                                    gotoxy(126,21);printf("You dont have enough money to buy a House on this property :(");
+                                    gotoxy(126,22+(offset++));printf("You dont have enough money to buy a House on this property :(");
                                     Sleep(3000);
                                     goto next;
                                 }
-                                gotoxy(126,23);printf("You have \033[0;32mSuccessfully\033[0m built a House on %s",prop_names[plyr_pos(current_player)]);
+                                gotoxy(126,23+(offset++));printf("You have \033[0;32mSuccessfully\033[0m built a House on %s",prop_names[plyr_pos(current_player)]);
                                 Sleep(2500);
                                 gotoxy(126,30);printf("Press any key to continue...");getch();
                                 goto next;
                             } else if(property_properies[plyr_pos(current_player)][4]==0) {
                                 if(players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][7]){
-                                    property_properies[plyr_pos(current_player)][4] +=1;
-                                    //PRINT PAYMENT...
-                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][7];
-                                    gotoxy(126,24);print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][7]);
-                                    Sleep(3000);
-                                    gotoxy(126,30);printf("Press any key to continue...");getch();
+                                    players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][7]; // Subtracts money
+                                    property_properies[plyr_pos(current_player)][4] += 1; // Sets number of hotels to 1
+                                    gotoxy(126,21+(offset++));print_name_wclr(current_player);printf(" - %dR",buy_sell_pay[plyr_pos(current_player)][7]); // Shows Transaction
                                 }
                                 else {
-                                    gotoxy(126,23);printf("You dont have enough money to buy a Hotel on this property :(");
-                                    Sleep(3000);
+                                    gotoxy(126,21+(offset++));printf("You dont have enough money to buy a Hotel on this property :(");
+                                    Sleep(2000);
                                     goto next;
                                 }
-                                gotoxy(126,25);printf("You have \033[0;32mSuccessfully\033[0m built a Hotel on %s",prop_names[plyr_pos(current_player)]);
-                                Sleep(3000);
+                                gotoxy(126,23+(offset++));printf("You have \033[0;32mSuccessfully\033[0m built a Hotel on %s",prop_names[plyr_pos(current_player)]);
+                                gotoxy(126,30);printf("Press any key to continue...");getch();
                             }
                         }
                     case 'c':
