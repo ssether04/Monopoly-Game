@@ -93,7 +93,7 @@ struct playerprop{
     char name[10];// Name of user {Default= Empty String}
     int name_len; //Length of the name of the user {Default=0}
     int colour; //Colour of choice of user (Colour id) {Default=-1}->[as colour starts from 0]
-    long long int money; //How much money the user has {Default=1000}
+    int money; //How much money the user has {Default=1000}
     int pos; //Current position of User {Default=0}->[Position at GO]
     int in_jail; //Flag value weather if user is in Jail or not {Default=0}-> 0 implies not in JAIL
     int in_park; //Flag value weather if user is in Parking or not {Default=0}-> 0 implies not in PARK
@@ -338,6 +338,8 @@ void print_prop_card(int crd_no) {
     }
 }
 
+
+//Updates Player Assets
 void update_assets(int plyr_id) {
     players[plyr_id].total_asset=0;
     for(int i=0;i<players[plyr_id].num_owned_prop;i++) {
@@ -435,8 +437,6 @@ void player_reset(int plyr_id) {
     players[plyr_id].total_asset = 0;
 }
 
-
-
 //Sells an owned propert {PlayerID, Flag value for debt sell, Payment for Debt Sell} {Returns cursor_offset}
 int sell_prop(int plyr_id, int force_pay_flag, int payment) {
     int sell_inp;
@@ -515,6 +515,7 @@ int enter_jail() {
     Sleep(4000);
     CURSOR_RESET;
 }
+
 
 int attempt_exitjail(int plyr_id) {
     char choice;
@@ -621,7 +622,7 @@ int get_player_info() {
         printf(startlines);
     }printf("\n");
     fclose(start_screen_fp);
-    gotoxy(90,22+cursor_offset);printf("Enter Number of Players(Max 4 / Min 2): ");scanf("%c",&player_count);player_count-=48;
+    gotoxy(90,22+cursor_offset);printf("Enter Number of Players(Max 4 / Min 2): ");scanf("%d",&player_count);player_count-=48;
     if( player_count>4 || player_count<0) {
         gotoxy(90,23+cursor_offset);printf("\033[0;31mINVALID!\033[0m MAX players is 4 and MIN is 2, Please enter 4 or less");
         player_count=0;
@@ -955,7 +956,11 @@ void game_start(){
             }
 
 
-            //TODO CHANGE JAIL SCREEN
+
+
+
+
+
 
 
             offset = 0;
@@ -1014,12 +1019,12 @@ void game_start(){
                             if(property_properies[plyr_pos(current_player)][3]==0 || property_properies[plyr_pos(current_player)][3]==1) {
                                 if(property_properies[plyr_pos(current_player)][3]==0 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][5]) {
                                     players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][5];// Subtracts Money
-                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][5]);// Shows Transaction 
+                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %dR",buy_sell_pay[plyr_pos(current_player)][5]);// Shows Transaction 
                                     property_properies[plyr_pos(current_player)][3] +=1;// Builds House
                                 }
                                 else if(property_properies[plyr_pos(current_player)][3]==1 && players[current_player].money>=buy_sell_pay[plyr_pos(current_player)][6]) {
                                     players[current_player].money -= buy_sell_pay[plyr_pos(current_player)][6];// Subtracts Money
-                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %d",buy_sell_pay[plyr_pos(current_player)][6]);// Shows Transaction 
+                                    gotoxy(126,22+(offset++));print_name_wclr(current_player);printf(" - %dR",buy_sell_pay[plyr_pos(current_player)][6]);// Shows Transaction 
                                     property_properies[plyr_pos(current_player)][3] +=1;// Builds House
                                 }
                                 else if(players[current_player].money<buy_sell_pay[plyr_pos(current_player)][5] || players[current_player].money<buy_sell_pay[plyr_pos(current_player)][6]){
