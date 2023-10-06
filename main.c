@@ -622,7 +622,9 @@ int get_player_info() {
         printf(startlines);
     }printf("\n");
     fclose(start_screen_fp);
-    gotoxy(90,22+cursor_offset);printf("Enter Number of Players(Max 4 / Min 2): ");scanf("%d",&player_count);player_count-=48;
+    gotoxy(90,22+cursor_offset);printf("Enter Number of Players(Max 4 / Min 2): ");
+    scanf("%d",&player_count);
+    // player_count-=48;
     if( player_count>4 || player_count<0) {
         gotoxy(90,23+cursor_offset);printf("\033[0;31mINVALID!\033[0m MAX players is 4 and MIN is 2, Please enter 4 or less");
         player_count=0;
@@ -878,8 +880,9 @@ void game_start(){
                     }
                     break;
             }
-            gotoxy(126,30);printf("Press any key to continue...");getch();
             bypass:
+            gotoxy(126,30);printf("Press any key to continue...");
+            getch();
         }
 
         //TAX SYSTEM
@@ -954,13 +957,6 @@ void game_start(){
                 Sleep(1000);
                 gotoxy(126,23+(offset++));printf("Press any key to continue...");getch();
             }
-
-
-
-
-
-
-
 
 
             offset = 0;
