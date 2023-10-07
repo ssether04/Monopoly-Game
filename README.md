@@ -10,15 +10,23 @@ This C program is a text-based implementation of the classic Monopoly board game
 - **Jail:** Players can land in jail, attempt to get out of jail, or pay to leave jail.
 - **Winning Conditions:** The game continues until only one player remains solvent, and they are declared the winner.
 
-## Usage
+## Steps to run the application
+- Make sure you have gcc compiler up and running
+  - Windows: https://www.youtube.com/watch?v=2jpLG_XBVWI
+  - MacOS: https://youtu.be/wY24ehH6mC0?si=9h5jZg4wHi977TMW
 - **Compile the Program:** Compile the C program using a C compiler (e.g., gcc)
   ```bash
   gcc -o main main.c
   ```
+- Make sure you have terminal on FULLSCREEN, or else the display will be messy
 - **Run the Game:** To run the game, ensure you are running the main.exe file with the terminal on fullscreen mode, with no zoom i.e, the default settings of terminal
   ```bash
   main.exe
   ```
+- After running main.exe, you will be greeted with a monopoly ascii art, use your trackpad to zoom out till the logo is in the center of the screen
+- Then just follow the on screen instructions to start the game. Enjoy!
+
+## Usage
 - **Gameplay:** Follow the on-screen instructions to play the game. Input your choices using keyboard inputs (e.g., 'r' for rolling the dice, 'b' for buying property, etc.).
 - **Player Turns:** Players take turns rolling dice, moving on the board, and performing actions such as buying properties, paying rent, or drawing cards.
 - **Winning:** The game continues until a player has aquired all the properties or if the player is the only person standing who is not bankrupt
