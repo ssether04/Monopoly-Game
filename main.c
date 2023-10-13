@@ -21,6 +21,12 @@
 #define _Yellow "\033[0;33m"
 #define _White "\033[0;37m"
 #define _NORMAL "\033[0m"
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 //CONSOLE ATTRIBUTES
 #define Terminal_Red 79
 #define Terminal_Green 175
@@ -313,28 +319,41 @@ void draw_board() {
 }
 
 //Prints the current card on which player is on
-void print_prop_card(int crd_no) {
-    int temp_prop_id=crd_no;
-    if(crd_no==5)crd_no=4;if(crd_no==6)crd_no=5;
-    if(crd_no==7)crd_no=6;if(crd_no==9)crd_no=7;
-    if(crd_no==10)crd_no=8;if(crd_no==13)crd_no=9;
-    if(crd_no==14)crd_no=10;
+void print_prop_card(int crd_no, char color_code[]) {
+    int temp_prop_id = crd_no;
+    if (crd_no == 5) crd_no = 4;
+    if (crd_no == 6) crd_no = 5;
+    if (crd_no == 7) crd_no = 6;
+    if (crd_no == 9) crd_no = 7;
+    if (crd_no == 10) crd_no = 8;
+    if (crd_no == 13) crd_no = 9;
+    if (crd_no == 14) crd_no = 10;
+
     char card_lines[100];
-    int line=1,cursor_offset=0;
+    int line = 1, cursor_offset = 0;
     FILE* card_disp;
-    card_disp=fopen("Files\\Cards.txt","r");
-    while(!feof(card_disp)) {
-            fgets(card_lines,100,card_disp);
-        if(line >(crd_no-1)*17 && line<=((crd_no)*17)+1){
-            gotoxy(126,35+(cursor_offset++));
+    card_disp = fopen("Files\\Cards.txt", "r");
+
+    while (!feof(card_disp)) {
+        fgets(card_lines, 100, card_disp);
+        if (line > (crd_no - 1) * 17 && line <= ((crd_no) * 17) + 1) {
+            gotoxy(126, 35 + (cursor_offset++));
+            printf(color_code);
             printf(card_lines);
-        } if(line == crd_no*17) break;
+            printf(ANSI_COLOR_RESET);
+        }
+        if (line == crd_no * 17) break;
         line++;
-    }printf("\n");
+    }
+
+    printf("\n");
     fclose(card_disp);
-    if(!players[current_player].in_jail && property_properies[temp_prop_id][1]){
-        int temp_len=(players[property_properies[temp_prop_id][2]].name_len + 11)/2;
-        gotoxy(139-temp_len,39);printf("Owned by - ");print_name_wclr(property_properies[temp_prop_id][2]);
+
+    if (!players[current_player].in_jail && property_properies[temp_prop_id][1]) {
+        int temp_len = (players[property_properies[temp_prop_id][2]].name_len + 11) / 2;
+        gotoxy(139 - temp_len, 39);
+        printf("Owned by - ");
+        print_name_wclr(property_properies[temp_prop_id][2]);
     }
 }
 
