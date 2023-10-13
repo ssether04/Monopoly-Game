@@ -879,6 +879,20 @@ void game_start(){
                         }
                     }
                     break;
+                case 15:
+                    move_plyr(current_player,2,1);
+                    break;
+                case 16:
+                    for(int plyr_id=0;plyr_id<player_count;plyr_id++) {
+                        if(!players[plyr_id].game_over && plyr_id!=current_player && players[plyr_id].money>=50) {
+                            players[plyr_id].money-=50;
+                            gotoxy(126,22+(chan_offset++));print_name_wclr(plyr_id);printf(" - 50");
+                            players[current_player].money +=50;
+                            gotoxy(126,22+(chan_offset++));print_name_wclr(current_player);printf(" + 50");
+                            chan_offset++;
+                        }
+                    }
+                    break;
             }
             bypass:
             gotoxy(126,30);printf("Press any key to continue...");
